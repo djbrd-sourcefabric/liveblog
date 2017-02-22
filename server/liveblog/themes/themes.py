@@ -415,6 +415,7 @@ class ThemesCommand(superdesk.Command):
         theme_service = get_resource_service('themes')
         created, updated = theme_service.update_registered_theme_with_local_files(force=True)
         print('%d themes registered' % (len(created) + len(updated)))
+
         if created:
             print('added:')
             for theme in created:
@@ -425,5 +426,24 @@ class ThemesCommand(superdesk.Command):
                 print('theme')
                 print('\t* %s %s (%s)' % (theme.get('label', theme['name']), theme['version'], theme['name']))
 
-
 superdesk.command('register_local_themes', ThemesCommand())
+
+
+class ClassicThemeSettingsCommand(superdesk.Command):
+    option_list = [
+        superdesk.Option('--language', '-l', dest='language', default=None),
+        superdesk.Option('--datetime-format', '-dtf', dest='datetimeFormat', default=None),
+    ]
+
+    def run(self, language, datetimeFormat):
+        theme_service = get_resource_service('themes')
+        classic_theme = theme_service.find_one(req=None,name='classic')
+
+        if classic_theme is not None:
+            settings = classic_theme['settings']
+            settings['language'] = language
+            settings['datetimeFormat'] = datetimeFormat
+            theme_service.patch(classic_theme['_id'], {'settings': settings})
+
+superdesk.command('update_classic_theme_settings', ClassicThemeSettingsCommand())
+
